@@ -24,33 +24,34 @@ jobs:
       run: |
         rm -rf /tmp/WLEDtemp/* || true
         mkdir -p /tmp/WLEDtemp
-        # WLED UFFICIALE - MQTT stabile e funzionante
-        wget https://github.com/wled/WLED/archive/refs/heads/main.zip -O /tmp/WLEDtemp/wled.zip
-        unzip /tmp/WLEDtemp/wled.zip -d /tmp/WLEDtemp
-        find /tmp/WLEDtemp -maxdepth 1 -mindepth 1 -name "WLED-main" -type d | head -1 > /tmp/WLEDtemp/wledfoldername
+        wget https://github.com/MoonModules/WLED-MM/archive/refs/heads/mdev.zip -O /tmp/WLEDtemp/mm.zip
+        unzip /tmp/WLEDtemp/mm.zip -d /tmp/WLEDtemp
+        find /tmp/WLEDtemp -maxdepth 1 -mindepth 1 -name "WLED-MM-mdev" -type d -o -name "WLED-mdev" -type d | head -1 > /tmp/WLEDtemp/wledfoldername
         WLED_FOLDER=$(cat /tmp/WLEDtemp/wledfoldername)
         cd "$WLED_FOLDER"
         
-        npm install
-        
-        # Override con MQTT ABILITATO (WLED ufficiale lo supporta perfettamente)
+        # Crea platformio_override.ini (metodo ufficiale WLED) [web:23][web:26]
         cat > platformio_override.ini << EOF
         [env:esp32_custom_mqtt]
-        extends = esp32_4MB
+        extends = esp32_4MB  ; <-- ENV ESISTENTE nel platformio.ini di MoonModules [web:21]
         build_flags = 
           \${esp32_4MB.build_flags}
           -D WLED_ENABLE_MQTT
           -D WLED_RELEASE_NAME="ESP32_4MB_MQTT"
+        board_build.partitions = default_8MB  ; Per sicurezza, 4MB+PSRAM
         EOF
         
-        pio run -e esp32_custom_mqtt
+        npm install
+        pio run -e esp32_custom_mqtt --target uploadfs  # Pulisce + compila
 
     - name: Copy Files
       run: |
         cd $GITHUB_WORKSPACE
         WLED_FOLDER=$(cat /tmp/WLEDtemp/wledfoldername)
+        # Path corretto PlatformIO [web:6]
         cp "$WLED_FOLDER/.pio/build/esp32_custom_mqtt/firmware.bin" $GITHUB_WORKSPACE/custom_build.bin
         date -I | tr -d '\n' >$GITHUB_WORKSPACE/last_update_date.txt
+
 
     - name: Commit Files
       run: |
