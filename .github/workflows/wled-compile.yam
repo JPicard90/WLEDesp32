@@ -24,32 +24,35 @@ jobs:
       run: |
         rm -rf /tmp/WLEDtemp/* || true
         mkdir -p /tmp/WLEDtemp
-        wget https://github.com/MoonModules/WLED-MM/archive/refs/heads/mdev.zip -O /tmp/WLEDtemp/mm.zip
-        unzip /tmp/WLEDtemp/mm.zip -d /tmp/WLEDtemp
-        find /tmp/WLEDtemp -maxdepth 1 -mindepth 1 -name "WLED-MM-mdev" -type d | head -1 > /tmp/WLEDtemp/wledfoldername
+        # WLED UFFICIALE - MQTT stabile e funzionante
+        wget https://github.com/wled/WLED/archive/refs/heads/main.zip -O /tmp/WLEDtemp/wled.zip
+        unzip /tmp/WLEDtemp/wled.zip -d /tmp/WLEDtemp
+        find /tmp/WLEDtemp -maxdepth 1 -mindepth 1 -name "WLED-main" -type d | head -1 > /tmp/WLEDtemp/wledfoldername
         WLED_FOLDER=$(cat /tmp/WLEDtemp/wledfoldername)
         cd "$WLED_FOLDER"
         
         npm install
         
-        # Override pulito SENZA MQTT (usa repo ufficiale che ha MQTT stabile)
+        # Override con MQTT ABILITATO (WLED ufficiale lo supporta perfettamente)
         cat > platformio_override.ini << EOF
-        [env:esp32_custom]
+        [env:esp32_custom_mqtt]
         extends = esp32_4MB
         build_flags = 
           \${esp32_4MB.build_flags}
+          -D WLED_ENABLE_MQTT
           -D WLED_RELEASE_NAME="ESP32_4MB_MQTT"
         EOF
         
-        pio run -e esp32_custom
+        pio run -e esp32_custom_mqtt
 
 
     - name: Copy Files
       run: |
         cd $GITHUB_WORKSPACE
         WLED_FOLDER=$(cat /tmp/WLEDtemp/wledfoldername)
-        cp "$WLED_FOLDER/.pio/build/esp32_custom/firmware.bin" $GITHUB_WORKSPACE/custom_build.bin
+        cp "$WLED_FOLDER/.pio/build/esp32_custom_mqtt/firmware.bin" $GITHUB_WORKSPACE/custom_build.bin
         date -I | tr -d '\n' >$GITHUB_WORKSPACE/last_update_date.txt
+
 
 
     - name: Commit Files
