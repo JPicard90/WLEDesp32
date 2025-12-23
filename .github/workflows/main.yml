@@ -20,7 +20,7 @@ jobs:
         pip install --upgrade platformio
     - name: Set up Node.js
       uses: actions/setup-node@v4
-    - name: Run PlatformIO
+    - name: Run PlatformIO (DEBUG)
       run: |
         rm -rf /tmp/WLEDtemp/* || true
         mkdir -p /tmp/WLEDtemp
@@ -31,18 +31,16 @@ jobs:
         
         npm install
         
-        # Environment REALE + MQTT
-        cat > platformio_override.ini << EOF
-        [env:esp32_mqtt]
-        extends = esp32dev_V4  ; <-- ESISTE nel platformio.ini [web:19]
-        build_flags = 
-          \${esp32dev_V4.build_flags}
-          -D WLED_ENABLE_MQTT
-          -D WLED_RELEASE_NAME="ESP32_MQTT"
-        EOF
+        # STAMPA TUTTI GLI ENVIRONMENT REALI
+        echo "=== ENVIRONMENT DISPONIBILI ==="
+        grep -E '^\[env:' platformio.ini | sed 's/\[env://g' | sed 's/\]/ (/g'
         
-        pio run -e esp32_mqtt
+        # Prova compilazione DEFAULT (senza override)
+        pio run -e esp32dev || echo "esp32dev NON ESISTE"
+        pio run -e nodemcuv2 || echo "nodemcuv2 NON ESISTE"
+        
         echo "/tmp/WLEDtemp/WLED-main" > /tmp/WLEDtemp/wledfoldername
+
     
     - name: Copy Files
       run: |
