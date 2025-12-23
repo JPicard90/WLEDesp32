@@ -20,7 +20,7 @@ jobs:
         pip install --upgrade platformio
     - name: Set up Node.js
       uses: actions/setup-node@v4
-    - name: Run PlatformIO (DEBUG)
+    - name: Run PlatformIO
       run: |
         rm -rf /tmp/WLEDtemp/* || true
         mkdir -p /tmp/WLEDtemp
@@ -31,15 +31,26 @@ jobs:
         
         npm install
         
-        # STAMPA TUTTI GLI ENVIRONMENT REALI
-        echo "=== ENVIRONMENT DISPONIBILI ==="
-        grep -E '^\[env:' platformio.ini | sed 's/\[env://g' | sed 's/\]/ (/g'
+        # ESP32 + MQTT (environment VERIFICATI)
+        cat > platformio_override.ini << EOF
+        [env:esp32_mqtt]
+        extends = esp32dev
+        build_flags = 
+          \${esp32dev.build_flags}
+          -D WLED_ENABLE_MQTT
+          -D WLED_RELEASE_NAME="ESP32_MQTT"
+        EOF
         
-        # Prova compilazione DEFAULT (senza override)
-        pio run -e esp32dev || echo "esp32dev NON ESISTE"
-        pio run -e nodemcuv2 || echo "nodemcuv2 NON ESISTE"
-        
+        pio run -e esp32_mqtt
         echo "/tmp/WLEDtemp/WLED-main" > /tmp/WLEDtemp/wledfoldername
+
+- name: Copy Files
+  run: |
+    cd $GITHUB_WORKSPACE
+    WLED_FOLDER=$(cat /tmp/WLEDtemp/wledfoldername)
+    cp "$WLED_FOLDER/.pio/build/esp32_mqtt/firmware.bin" $GITHUB_WORKSPACE/custom_build.bin
+    date -I | tr -d '\n' >$GITHUB_WORKSPACE/last_update_date.txt
+
 
     
     - name: Copy Files
