@@ -25,19 +25,18 @@ jobs:
         rm -rf /tmp/WLEDtemp/* || true
         mkdir -p /tmp/WLEDtemp
         
-        # Usa WLED ufficiale main (MQTT stabile)
         wget https://github.com/wled/WLED/archive/refs/heads/main.zip -O /tmp/WLEDtemp/wled.zip
         unzip /tmp/WLEDtemp/wled.zip -d /tmp/WLEDtemp
         cd /tmp/WLEDtemp/WLED-main
         
         npm install
         
-        # Environment ESISTENTE + MQTT abilitato
+        # Environment REALE + MQTT
         cat > platformio_override.ini << EOF
         [env:esp32_mqtt]
-        extends = esp32dev  ; <-- ENVIRONMENT REALE in platformio.ini [web:19]
+        extends = esp32dev_V4  ; <-- ESISTE nel platformio.ini [web:19]
         build_flags = 
-          \${esp32dev.build_flags}
+          \${esp32dev_V4.build_flags}
           -D WLED_ENABLE_MQTT
           -D WLED_RELEASE_NAME="ESP32_MQTT"
         EOF
@@ -51,6 +50,7 @@ jobs:
         WLED_FOLDER=$(cat /tmp/WLEDtemp/wledfoldername)
         cp "$WLED_FOLDER/.pio/build/esp32_mqtt/firmware.bin" $GITHUB_WORKSPACE/custom_build.bin
         date -I | tr -d '\n' >$GITHUB_WORKSPACE/last_update_date.txt
+
 
 
 
