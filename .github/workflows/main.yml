@@ -24,28 +24,27 @@ jobs:
       with:
         node-version: '20'
         
-    - name: Run PlatformIO
+    - name: Run PlatformIO (Huidu HD-WF2 S3 4MB)
       run: |
         rm -rf /tmp/WLEDtemp/* || true
         mkdir -p /tmp/WLEDtemp
         
-        # MOONMODULES = HUB75 + MQTT
         wget https://github.com/MoonModules/WLED-MM/archive/refs/heads/mdev.zip -O /tmp/WLEDtemp/mm.zip
         unzip /tmp/WLEDtemp/mm.zip -d /tmp/WLEDtemp
         cd /tmp/WLEDtemp/WLED-MM-mdev
         
-        npm install --quiet  # Ignora npm warnings
+        npm install --quiet
         
-        # COMPILA (HUB75 + MQTT inclusi)
-        pio run -e esp32dev
+        # PERFETTO per HD-WF2 4MB QSPI
+        pio run -e esp32s3_4M_qspi
         
         echo "/tmp/WLEDtemp/WLED-MM-mdev" > /tmp/WLEDtemp/wledfoldername
-
+    
     - name: Copy Files
       run: |
         cd $GITHUB_WORKSPACE
         WLED_FOLDER=$(cat /tmp/WLEDtemp/wledfoldername)
-        cp "$WLED_FOLDER/.pio/build/esp32dev/firmware.bin" $GITHUB_WORKSPACE/custom_build.bin
+        cp "$WLED_FOLDER/.pio/build/esp32s3_4M_qspi/firmware.bin" $GITHUB_WORKSPACE/huidu_wf2.bin
         date -I | tr -d '\n' >$GITHUB_WORKSPACE/last_update_date.txt
 
     - name: Commit Files
