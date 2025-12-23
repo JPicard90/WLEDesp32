@@ -24,24 +24,34 @@ jobs:
       run: |
         rm -rf /tmp/WLEDtemp/* || true
         mkdir -p /tmp/WLEDtemp
-        wget https://github.com/moonmodules/WLED/archive/refs/heads/mdev.zip -O /tmp/WLEDtemp/mm.zip
-        unzip /tmp/WLEDtemp/mm.zip -d /tmp/WLEDtemp
-        find /tmp/WLEDtemp -maxdepth 1 -mindepth 1 -name "*" -type d >> /tmp/WLEDtemp/wledfoldername
-        cd `cat /tmp/WLEDtemp/wledfoldername`
-        npm install
-        echo '[env:custom_build]' >>platformio.ini
-        echo 'extends = env:esp32S3_4MB_S' >>platformio.ini
-        echo 'build_flags = ${env:esp32S3_4MB_S.build_flags} -D WLED_ENABLE_MQTT' >> platformio.ini
+        # WLED UFFICIALE - MQTT stabile e funzionante
+        wget https://github.com/wled/WLED/archive/refs/heads/main.zip -O /tmp/WLEDtemp/wled.zip
+        unzip /tmp/WLEDtemp/wled.zip -d /tmp/WLEDtemp
+        find /tmp/WLEDtemp -maxdepth 1 -mindepth 1 -name "WLED-main" -type d | head -1 > /tmp/WLEDtemp/wledfoldername
+        WLED_FOLDER=$(cat /tmp/WLEDtemp/wledfoldername)
+        cd "$WLED_FOLDER"
         
-        echo 'build_unflags= -D WLED_RELEASE_NAME' >>platformio.ini
-        pio run -e custom_build || pio run -e custom_build
+        npm install
+        
+        # Override con MQTT ABILITATO (WLED ufficiale lo supporta perfettamente)
+        cat > platformio_override.ini << EOF
+        [env:esp32_custom_mqtt]
+        extends = esp32_4MB
+        build_flags = 
+          \${esp32_4MB.build_flags}
+          -D WLED_ENABLE_MQTT
+          -D WLED_RELEASE_NAME="ESP32_4MB_MQTT"
+        EOF
+        
+        pio run -e esp32_custom_mqtt
+
     - name: Copy Files
       run: |
         cd $GITHUB_WORKSPACE
-        git rm -r $GITHUB_WORKSPACE/*.bin || true
-        WLEDFOLDERNAME=`cat /tmp/WLEDtemp/wledfoldername`
-        cp ${WLEDFOLDERNAME}/build_output/firmware/custom_build.bin $GITHUB_WORKSPACE/
+        WLED_FOLDER=$(cat /tmp/WLEDtemp/wledfoldername)
+        cp "$WLED_FOLDER/.pio/build/esp32_custom_mqtt/firmware.bin" $GITHUB_WORKSPACE/custom_build.bin
         date -I | tr -d '\n' >$GITHUB_WORKSPACE/last_update_date.txt
+
     - name: Commit Files
       run: |
         cd $GITHUB_WORKSPACE
