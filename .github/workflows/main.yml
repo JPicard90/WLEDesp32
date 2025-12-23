@@ -24,7 +24,7 @@ jobs:
       with:
         node-version: '20'
         
-    - name: Run PlatformIO (Huidu HD-WF2 S3 4MB)
+    - name: Run PlatformIO (HD-WF2 S3 4MB)
       run: |
         rm -rf /tmp/WLEDtemp/* || true
         mkdir -p /tmp/WLEDtemp
@@ -35,8 +35,8 @@ jobs:
         
         npm install --quiet
         
-        # PERFETTO per HD-WF2 4MB QSPI
-        pio run -e esp32s3_4M_qspi
+        # PERFETTO per HD-WF2 ESP32-S3 4MB
+        pio run -e esp32S3_4MB_PSRAM_M
         
         echo "/tmp/WLEDtemp/WLED-MM-mdev" > /tmp/WLEDtemp/wledfoldername
     
@@ -44,8 +44,9 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE
         WLED_FOLDER=$(cat /tmp/WLEDtemp/wledfoldername)
-        cp "$WLED_FOLDER/.pio/build/esp32s3_4M_qspi/firmware.bin" $GITHUB_WORKSPACE/huidu_wf2.bin
+        cp "$WLED_FOLDER/.pio/build/esp32S3_4MB_PSRAM_M/firmware.bin" $GITHUB_WORKSPACE/huidu_wf2.bin
         date -I | tr -d '\n' >$GITHUB_WORKSPACE/last_update_date.txt
+
 
     - name: Commit Files
       run: |
