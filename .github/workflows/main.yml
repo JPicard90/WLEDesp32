@@ -53,6 +53,6 @@ jobs:
         cd $GITHUB_WORKSPACE
         git config user.name "GitHub Actions Bot"
         git config user.email "actions@github.com"
-        git add custom_build.bin last_update_date.txt
+        git add huidu_wf2.bin last_update_date.txt
         git commit -m "WLED HUB75+MQTT ESP32" || echo "No changes"
         git push origin main || echo "Push failed"
